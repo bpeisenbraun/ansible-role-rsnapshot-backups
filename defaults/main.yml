@@ -1,15 +1,11 @@
 ---
-## rsnapshot configuration options
+## rsnapshot.conf configuration options
 #
 # Default retention periods
 rsnapshot_keep_hourly: "unset"
 rsnapshot_keep_daily: 7
 rsnapshot_keep_weekly: 4
 rsnapshot_keep_monthly: 3
-
-# Max concurrent rsnapshot/rsync jobs to run. This should be tuned 
-# based on the server and clients disk and network bandwidth.
-rsnapshot_concurrent_jobs: 4
 
 # Pre/post-exec options
 rsnapshot_cmd_preexec: "unset"
@@ -21,11 +17,31 @@ rsnapshot_verbose: 2
 # Log level verbosity
 rsnapshot_loglevel: 3
 
-# XXX Cron options 
-
+# Rsync bandwidth limit. See 'bwlimit' option in the rsync man page
+rsnapshot_bwlimit: "unset"
 
 ## Role configuration options
-# Default client-side rsnapshot user
+#
+# Max concurrent rsnapshot/rsync jobs to run. This should be tuned 
+# based on the server and clients disk and network bandwidth.
+rsnapshot_concurrent_jobs: 4
+
+# Cron scheduling
+rsnapshot_hourly_minute: 35
+rsnapshot_hourly_hour: 1
+
+rsnapshot_daily_minute: 05
+rsnapshot_daily_hour: 1
+
+rsnapshot_weekly_minute: 35
+rsnapshot_weekly_hour: 0
+rsnapshot_weekly_weekday: 7
+
+rsnapshot_monthly_minute: 05
+rsnapshot_monthly_hour: 0
+rsnapshot_monthly_day: 1
+
+# client-side rsnapshot user running backups
 rsnapshot_user: rsnapshot
 
 ## Settings below should not need to be manually overridden

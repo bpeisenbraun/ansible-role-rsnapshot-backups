@@ -136,12 +136,13 @@ lockfile	/var/run/rsnapshot-{{ inventory_hostname }}.pid
 
 # Default rsync args. All rsync commands have at least these options set.
 #
-# XXX bandwidth limit option
+{% if rsnapshot_bwlimit == "unset" %}
 #rsync_short_args	-a
 #rsync_long_args	--delete --numeric-ids --relative --delete-excluded
-
-#rsync_short_args    -az
-# rsync_long_args --delete --numeric-ids --relative --delete-excluded --bwlimit=10000
+{% else %}
+rsync_short_args    -az
+rsync_long_args --delete --numeric-ids --relative --delete-excluded --bwlimit={{ rsnapshot_bwlimit }}
+{% endif%}
 
 # ssh has no args passed by default, but you can specify some here.
 #

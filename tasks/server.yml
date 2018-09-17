@@ -39,13 +39,64 @@
   args:
     creates: "/root/.ssh/id_{{ rsnapshot_user }}"
 
-- name: Ensure parallel cron job for rsnapshot exists on server
-  template:
-    src: etc/cron.d/rsnapshot.j2
-    dest: /etc/cron.d/rsnapshot
-    owner: root
-    group: root
-    mode: 0644
+- name: Add hourly sync and snapshot cron job if set by admin
+  cron:
+    name: "hourly sync and snapshot"
+    cron_file: /etc/cron.d/rsnapshot
+    minute: "{{ rsnapshot_hourly_minute }}"
+    hour: "{{ rsnapshot_hourly_hour }}"
+    state: present
+    user: root
+    job: '/usr/bin/parallel -j {{ rsnapshot_concurrent_jobs }} "/usr/bin/rsnapshot -c {} sync && /usr/bin/rsnapshot -c {} hourly" ::: /etc/rsnapshot.d/*.conf'
+  when: rsnapshot_keep_hourly != "unset"
+  tags: update_cron
+
+- name: Add daily snapshot cron job if hourly is set by admin
+  cron:
+    name: "daily snapshot"
+    cron_file: /etc/cron.d/rsnapshot
+    minute: "{{ rsnapshot_daily_minute }}"
+    hour: "{{ rsnapshot_daily_hour }}"
+    state: present
+    user: root
+    job: '/usr/bin/parallel -j {{ rsnapshot_concurrent_jobs }} /usr/bin/rsnapshot -c {} daily ::: /etc/rsnapshot.d/*.conf'
+  when: rsnapshot_keep_hourly != "unset"
+  tags: update_cron
+
+- name: Add daily sync and snapshot cron job when hourly is unset
+  cron:
+    name: "daily sync and snapshot"
+    cron_file: /etc/cron.d/rsnapshot
+    minute: "{{ rsnapshot_daily_minute }}"
+    hour: "{{ rsnapshot_daily_hour }}"
+    state: present
+    user: root
+    job: '/usr/bin/parallel -j {{ rsnapshot_concurrent_jobs }} "/usr/bin/rsnapshot -c {} sync && /usr/bin/rsnapshot -c {} daily" ::: /etc/rsnapshot.d/*.conf'
+  when: rsnapshot_keep_hourly == "unset"
+  tags: update_cron
+
+- name: Add weekly snapshot cron job
+  cron:
+    name: "weekly snapshot"
+    cron_file: /etc/cron.d/rsnapshot
+    minute: "{{ rsnapshot_weekly_minute }}"
+    hour: "{{ rsnapshot_weekly_hour }}"
+    weekday: "{{ rsnapshot_weekly_weekday }}"
+    state: present
+    user: root
+    job: "/usr/bin/parallel -j {{ rsnapshot_concurrent_jobs }} /usr/bin/rsnapshot -c {} weekly ::: /etc/rsnapshot.d/*.conf"
+  tags: update_cron
+
+- name: Add monthly snapshot cron job
+  cron:
+    name: "monthly snapshot"
+    cron_file: /etc/cron.d/rsnapshot
+    minute: "{{ rsnapshot_monthly_minute }}"
+    hour: "{{ rsnapshot_monthly_hour }}"
+    day: "{{ rsnapshot_monthly_day }}"
+    state: present
+    user: root
+    job: "/usr/bin/parallel -j {{ rsnapshot_concurrent_jobs }} /usr/bin/rsnapshot -c {} monthly ::: /etc/rsnapshot.d/*.conf"
   tags: update_cron
 
 # Nagios checks/cfg
