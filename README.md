@@ -1,7 +1,8 @@
 # Ansible Role: rsnapshot Backups
 
-[![Build Status](https://travis-ci.org/bpeisenbraun/ansible-rsnapshot.svg?branch=master)](https://travis-ci.org/bpeisenbraun/ansible-rsnapshot)
-[![License](https://img.shields.io/badge/license-MIT%20License-brightgreen.svg)](https://opensource.org/licenses/MIT)
+# !!! Caution: Menhirs Turning !!!
+
+This is not fully baked yet. Proceed with caution.
 
 # Description
 
