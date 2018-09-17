@@ -1,0 +1,4 @@
+# XXX hourly interval option
+05 1 * * * root /usr/bin/parallel -j {{ rsnapshot_concurrent_jobs }} "/usr/bin/rsnapshot -c {} sync && /usr/bin/rsnapshot -c {} daily" ::: /etc/rsnapshot.d/*.conf
+35 0 * * 7 root /usr/bin/parallel -j {{ rsnapshot_concurrent_jobs }} /usr/bin/rsnapshot -c {} weekly ::: /etc/rsnapshot.d/*.conf
+05 0 1 * * root /usr/bin/parallel -j {{ rsnapshot_concurrent_jobs }} /usr/bin/rsnapshot -c {} monthly ::: /etc/rsnapshot.d/*.conf

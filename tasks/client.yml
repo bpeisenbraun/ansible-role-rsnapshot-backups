@@ -1,0 +1,77 @@
+---
+# Set up the client side
+- name: Push the rrsync script to client hosts
+  copy:
+    src: usr/local/bin/rrsync
+    dest: /usr/local/bin/rrsync
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Create {{ rsnapshot_user }} user on backup client
+  user:
+    name: "{{ rsnapshot_user }}"
+    comment: "rsnapshot Backup User"
+
+- name: Register SSH public key for {{ rsnapshot_user }} user on the server
+  slurp:
+    src: "/root/.ssh/id_{{ rsnapshot_user }}.pub"
+  register: backup_user_key
+  delegate_to: "{{ backup_server }}"
+
+- name: Copy SSH public key into place for {{ rsnapshot_user }} user
+  authorized_key:
+    user: "{{ rsnapshot_user }}"
+    state: present
+    key: "{{ backup_user_key['content'] | b64decode }}"
+    key_options: 'from="{{ backup_server_ip }}",no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding,command="/usr/bin/sudo /usr/local/bin/rrsync -ro /"'
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Set up sudoers for the {{ rsnapshot_user }} user
+  template:
+    src: etc/sudoers.d/rsnapshot.j2
+    dest: /etc/sudoers.d/rsnapshot
+    owner: root
+    group: root
+    mode: 0640
+
+- name: Ensure the sudoers.d files are being included
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: "^#includedir /etc/sudoers.d"
+    line: "#includedir /etc/sudoers.d"
+    validate: '/usr/sbin/visudo -cf %s'
+
+- name: Create client backup configurations on the server
+  template:
+    src: etc/rsnapshot.d/rsnapshot-host-template.j2
+    dest: "/etc/rsnapshot.d/{{ inventory_hostname }}.conf"
+    owner: root
+    group: root
+    mode: 0644
+  tags: update_rsnapshot_config
+  delegate_to: "{{ backup_server }}"
+
+- name: Create the client backup location on the server
+  file:
+    path: "{{ hostvars[backup_server]['rsnapshot_backup_root'] }}/{{ inventory_hostname }}"
+    state: directory
+    mode: 0700
+  tags: update_rsnapshot_config
+  delegate_to: "{{ backup_server }}"
+
+- name: Register the rsnapshot client SSH key
+  command: "ssh-keyscan -H {{ inventory_hostname }}.{{ domainname }}"
+  register: rsnapshot_client_keyscan
+  delegate_to: "{{ backup_server }}"
+  changed_when: False
+  check_mode: no
+
+- name: Add the rsnapshot client SSH key to known_hosts on the rsnapshot server
+  lineinfile:
+    path: /root/.ssh/known_hosts
+    line: "{{ item }}" 
+  with_items: 
+    - "{{ rsnapshot_client_keyscan.stdout_lines }}"
+  delegate_to: "{{ backup_server }}"

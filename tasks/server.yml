@@ -1,0 +1,52 @@
+---
+# Set up the server side
+- name: Install rsnapshot package and tools
+  package:
+    name: "{{ item }}"
+    state: "{{ pkgversion | default('present') }}"
+  with_items:
+    - rsnapshot
+    - parallel
+
+- name: Delete the default rsnapshot.conf file
+  file:
+    path: /etc/rsnapshot.conf
+    state: absent
+
+- name: Create backup directory
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0700
+  with_items:
+    - "{{ rsnapshot_backup_root }}"
+
+- name: Create config/log directory structure
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: "{{ unprivileged_group }}"
+    mode: 0750
+  with_items:
+    - /etc/rsnapshot.d
+    - /var/log/rsnapshot
+
+- name: Create an SSH key for the {{ rsnapshot_user }} user if necessary
+  shell: "/usr/bin/ssh-keygen -b 4096 -f /root/.ssh/id_{{ rsnapshot_user }} -N '' -C {{ rsnapshot_user }}@{{ ansible_hostname }}"
+  args:
+    creates: "/root/.ssh/id_{{ rsnapshot_user }}"
+
+- name: Ensure parallel cron job for rsnapshot exists on server
+  template:
+    src: etc/cron.d/rsnapshot.j2
+    dest: /etc/cron.d/rsnapshot
+    owner: root
+    group: root
+    mode: 0644
+  tags: update_cron
+
+# Nagios checks/cfg
+# selinux contexts

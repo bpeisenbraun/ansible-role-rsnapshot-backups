@@ -1,0 +1,15 @@
+---
+# Set some vars based on distribution type
+- include: facts.yml
+
+# Set up the server side first
+- include: server.yml
+  when: rsnapshot_backup_root is defined
+
+# Set up the client side
+- include: client.yml
+  when: backup_dirs is defined
+
+# Set up an SSH proxy for backing up proxied hosts
+##- include: proxy.yml
+#when: backup_proxy is defined

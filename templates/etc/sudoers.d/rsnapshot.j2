@@ -1,0 +1,4 @@
+Cmnd_Alias RRSYNC = /usr/local/bin/rrsync -ro /
+Defaults!RRSYNC env_keep = "SSH_ORIGINAL_COMMAND SSH_CONNECTION"
+Defaults:{{ rsnapshot_user }} !requiretty
+{{ rsnapshot_user }} ALL=NOPASSWD: RRSYNC
