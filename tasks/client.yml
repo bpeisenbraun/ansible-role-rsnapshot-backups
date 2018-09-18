@@ -61,17 +61,27 @@
   tags: update_rsnapshot_config
   delegate_to: "{{ backup_server }}"
 
-- name: Register the rsnapshot client SSH key
-  command: "ssh-keyscan -H {{ inventory_hostname }}.{{ domainname }}"
+- name: Check for the client SSH host key in the server known_hosts
+  command: "/usr/bin/ssh-keygen -F {{ inventory_hostname }}.{{ domainname }}"
+  register: rsnapshot_known_hosts_check
+  delegate_to: "{{ backup_server }}"
+  changed_when: False
+  check_mode: no
+  ignore_errors: True
+
+- name: Register the rsnapshot client SSH host key
+  command: "/usr/bin/ssh-keyscan -H {{ inventory_hostname }}.{{ domainname }}"
   register: rsnapshot_client_keyscan
   delegate_to: "{{ backup_server }}"
   changed_when: False
   check_mode: no
+  when: rsnapshot_known_hosts_check.rc == 1
 
-- name: Add the rsnapshot client SSH key to known_hosts on the rsnapshot server
+- name: Add the rsnapshot client SSH host key to known_hosts on the rsnapshot server
   lineinfile:
     path: /root/.ssh/known_hosts
     line: "{{ item }}"
   with_items:
     - "{{ rsnapshot_client_keyscan.stdout_lines }}"
   delegate_to: "{{ backup_server }}"
+  when: rsnapshot_known_hosts_check.rc == 1
