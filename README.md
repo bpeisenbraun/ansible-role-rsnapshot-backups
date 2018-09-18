@@ -124,5 +124,5 @@ session:
 rsnapshot -c /etc/rsnapshot.d/HOSTNAME.conf sync
 ```
 
-Accept the host key if necessary and monitor the progress to ensure it
-completes successfully.
+Monitor the progress to ensure it completes successfully. Backups run from cron 
+will log their output to **/var/log/rsnapshot/HOSTNAME.log**.
