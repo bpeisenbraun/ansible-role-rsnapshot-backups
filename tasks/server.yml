@@ -5,8 +5,9 @@
     name: "{{ item }}"
     state: "{{ pkgversion | default('present') }}"
   with_items:
-    - rsnapshot
     - parallel
+    - rsnapshot
+    - rsync
 
 - name: Delete the default rsnapshot.conf file
   file:
@@ -38,6 +39,8 @@
   shell: "/usr/bin/ssh-keygen -b 4096 -f /root/.ssh/id_{{ rsnapshot_user }} -N '' -C {{ rsnapshot_user }}@{{ ansible_hostname }}"
   args:
     creates: "/root/.ssh/id_{{ rsnapshot_user }}"
+    warn: false
+  tags: skip_ansible_lint
 
 - name: Add hourly sync and snapshot cron job if set by admin
   cron:

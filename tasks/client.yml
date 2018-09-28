@@ -1,5 +1,12 @@
 ---
 # Set up the client side
+- name: Install required packages
+  package:
+    name: "{{ item }}"
+    state: "{{ pkgversion | default('present') }}"
+  with_items:
+    - rsync
+
 - name: Push the rrsync script to client hosts
   copy:
     src: usr/local/bin/rrsync
@@ -65,16 +72,16 @@
   command: "/usr/bin/ssh-keygen -F {{ inventory_hostname }}.{{ domainname }}"
   register: rsnapshot_known_hosts_check
   delegate_to: "{{ backup_server }}"
-  changed_when: False
-  check_mode: no
-  ignore_errors: True
+  changed_when: false
+  check_mode: false
+  ignore_errors: true
 
 - name: Register the rsnapshot client SSH host key
   command: "/usr/bin/ssh-keyscan -H {{ inventory_hostname }}.{{ domainname }}"
   register: rsnapshot_client_keyscan
   delegate_to: "{{ backup_server }}"
-  changed_when: False
-  check_mode: no
+  changed_when: false
+  check_mode: false
   when: rsnapshot_known_hosts_check.rc == 1
 
 - name: Add the rsnapshot client SSH host key to known_hosts on the rsnapshot server

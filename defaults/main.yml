@@ -22,7 +22,7 @@ rsnapshot_bwlimit: "unset"
 
 ## Role configuration options
 #
-# Max concurrent rsnapshot/rsync jobs to run. This should be tuned 
+# Max concurrent rsnapshot/rsync jobs to run. This should be tuned
 # based on the server and clients disk and network bandwidth.
 rsnapshot_concurrent_jobs: 4
 
@@ -46,6 +46,6 @@ rsnapshot_user: rsnapshot
 
 ## Settings below should not need to be manually overridden
 #
-# Set default unprivileged group for RHEL and friends. Overriddden in facts.yml 
+# Set default unprivileged group for RHEL and friends. Overriddden in facts.yml
 # for Debian and friends.
 unprivileged_group: nobody

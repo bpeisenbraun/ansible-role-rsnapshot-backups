@@ -11,5 +11,5 @@
   when: backup_dirs is defined
 
 # Set up an SSH proxy for backing up proxied hosts
-##- include: proxy.yml
-#when: backup_proxy is defined
+- include: proxy.yml
+  when: backup_proxy is defined

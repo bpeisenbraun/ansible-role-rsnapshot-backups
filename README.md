@@ -83,7 +83,7 @@ backup_dirs:
 ### Optional Client Configuration
 
 There are a number of tunable configuration options for the rsnapshot.conf files 
-for each client. See **defaults/main.yml** for a complete list.
+for each client. See **[defaults/main.yml](defaults/main.yml)** for a complete list.
 
 ### Required Proxy Configuration
 
