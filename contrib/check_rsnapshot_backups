@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# A simple Nagios NRPE plugin to check rsnapshot backup status.
+
+set -eu
+
+# Define our vars
+now_epoch=$(date '+%s')
+incomplete=""
+errors=""
+
+# Read the configs to see what hosts we should be backing up
+for c in /etc/rsnapshot.d/*.conf;do 
+  if [ -f "$c" ]; then
+    config=$(basename "$c")
+    host=${config%.conf}
+    last_completed=$(grep "completed" "/var/log/rsnapshot/$host.log" | tail -n 1)
+    last_completed_date=$(echo "$last_completed" | sed -e 's/^.*\[//g' | sed -e 's/\].*//g')
+    last_completed_simple_date="${last_completed_date//T/ }"
+    last_completed_epoch=$(date -d "$last_completed_simple_date" '+%s')
+    delta=$((now_epoch - last_completed_epoch))
+    if [ $delta -gt 90000 ]; then # 25 hours
+      incomplete="$incomplete $host"
+    elif echo "$last_completed" | grep -Eqi 'error'; then
+      errors="$errors $host"
+    fi
+  fi
+done
+
+# Output Nagios bits
+if [ -n "$incomplete" ]; then
+  echo "CRITICAL - Backups for these hosts did not complete:$incomplete"
+  exit 2
+elif [ -n "$errors" ]; then
+  echo "WARNING - Backups for these hosts had errors:$errors"
+  exit 1
+elif [ -z "$errors" ]; then
+  echo "OK - all backups were successful"
+  exit 0
+fi
+  
+echo "UNKNOWN - can not parse backup file logs or something"
+exit 3
