@@ -1,0 +1,1 @@
+from="{{ backup_server_ip }}",no-agent-forwarding,no-pty,no-user-rc,no-x11-forwarding,command="",{% for i in backup_proxy %}permitopen="{{ i }}:22{{ "," if not loop.last else "" }}{% endfor %}" {{ backup_user_key['content'] | b64decode }}

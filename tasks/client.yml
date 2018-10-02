@@ -26,7 +26,7 @@
   register: backup_user_key
   delegate_to: "{{ backup_server }}"
 
-- name: Copy SSH public key into place for {{ rsnapshot_user }} user
+- name: Add server SSH public key to authorized_keys for {{ rsnapshot_user }} user on the client
   authorized_key:
     user: "{{ rsnapshot_user }}"
     state: present
@@ -53,7 +53,7 @@
 - name: Create client backup configurations on the server
   template:
     src: etc/rsnapshot.d/rsnapshot-host-template.j2
-    dest: "/etc/rsnapshot.d/{{ inventory_hostname }}.conf"
+    dest: "/etc/rsnapshot.d/{{ ansible_hostname }}.{{ ansible_domain }}.conf"
     owner: root
     group: root
     mode: 0644
@@ -62,14 +62,14 @@
 
 - name: Create the client backup location on the server
   file:
-    path: "{{ hostvars[backup_server]['rsnapshot_backup_root'] }}/{{ inventory_hostname }}"
+    path: "{{ hostvars[backup_server]['rsnapshot_backup_root'] }}/{{ ansible_hostname }}.{{ ansible_domain }}"
     state: directory
     mode: 0700
   tags: update_rsnapshot_config
   delegate_to: "{{ backup_server }}"
 
 - name: Check for the client SSH host key in the server known_hosts
-  command: "/usr/bin/ssh-keygen -F {{ inventory_hostname }}.{{ domainname }}"
+  command: "/usr/bin/ssh-keygen -F {{ ansible_hostname }}.{{ ansible_domain }}"
   register: rsnapshot_known_hosts_check
   delegate_to: "{{ backup_server }}"
   changed_when: false
@@ -77,7 +77,7 @@
   ignore_errors: true
 
 - name: Register the rsnapshot client SSH host key
-  command: "/usr/bin/ssh-keyscan -H {{ inventory_hostname }}.{{ domainname }}"
+  command: "/usr/bin/ssh-keyscan -H {{ ansible_hostname }}.{{ ansible_domain }}"
   register: rsnapshot_client_keyscan
   delegate_to: "{{ backup_server }}"
   changed_when: false

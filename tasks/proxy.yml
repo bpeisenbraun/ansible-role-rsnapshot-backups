@@ -1,0 +1,79 @@
+---
+- name: Create sshproxy user
+  user:
+    name: sshproxy
+    comment: "SSH proxy user for rsnapshot backups"
+    create_home: true
+  register: sshproxy_user_vars
+
+- name: Create ~sshproxy/.ssh directory
+  file:
+    path: "{{ sshproxy_user_vars.home }}/.ssh"
+    owner: sshproxy
+    group: sshproxy
+    mode: 0700
+    state: directory
+
+- name: Register server SSH public key for {{ rsnapshot_user }} user on the server
+  slurp:
+    src: "/root/.ssh/id_{{ rsnapshot_user }}.pub"
+  register: backup_user_key
+  delegate_to: "{{ backup_server }}"
+
+- name: Add server SSH public key to authorized_keys for sshproxy user
+  template:
+    src: home/sshproxy/ssh/authorized_keys.j2
+    dest: "{{ sshproxy_user_vars.home }}/.ssh/authorized_keys"
+    owner: sshproxy
+    group: sshproxy
+    mode: 0400
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Ensure SSH configuration snippet directory exists
+  file:
+    path: /root/.ssh/config.d
+    state: directory
+    owner: root
+    group: root
+    mode: 0700
+  delegate_to: "{{ backup_server }}"
+
+- name: Create an SSH configuration snippet for the proxy on the backup server
+  template:
+    src: root/ssh/config.d/config.j2
+    dest: "/root/.ssh/config.d/{{ ansible_hostname }}.{{ ansible_domain }}-config"
+  delegate_to: "{{ backup_server }}"
+
+- name: Assemble SSH config snippets into a single file
+  assemble:
+    src: /root/.ssh/config.d
+    dest: /root/.ssh/config
+    owner: root
+    group: root
+    mode: 0400
+    backup: yes
+  delegate_to: "{{ backup_server }}"
+
+- name: Check for the proxy SSH host key in the server known_hosts
+  command: "/usr/bin/ssh-keygen -F {{ ansible_hostname }}.{{ ansible_domain }}"
+  register: rsnapshot_known_hosts_check
+  delegate_to: "{{ backup_server }}"
+  changed_when: false
+  check_mode: false
+  ignore_errors: true
+
+- name: Register the rsnapshot proxy SSH host key
+  command: "/usr/bin/ssh-keyscan -H {{ ansible_hostname }}.{{ ansible_domain }}"
+  register: rsnapshot_client_keyscan
+  changed_when: false
+  check_mode: false
+  when: rsnapshot_known_hosts_check.rc == 1
+
+- name: Add the rsnapshot proxy SSH host key to known_hosts on the rsnapshot server
+  lineinfile:
+    path: /root/.ssh/known_hosts
+    line: "{{ item }}"
+  with_items:
+    - "{{ rsnapshot_client_keyscan.stdout_lines }}"
+  delegate_to: "{{ backup_server }}"
+  when: rsnapshot_known_hosts_check.rc == 1

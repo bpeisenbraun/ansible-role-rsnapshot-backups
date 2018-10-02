@@ -10,7 +10,7 @@ Terminology: the "server" is the machine that will use rsync to pull the
 backups from the "clients". A "proxy" is an intermediate host between the two
 endpoints.
 
-# How It Works
+# Overview
 
 On the rsnapshot server, the role will create:
 
@@ -20,11 +20,11 @@ On the rsnapshot server, the role will create:
   - a backup configuration directory at **/etc/rsnapshot.d**
 
 Each client will have its own rsnapshot.conf file in the **/etc/rsnapshot.d**
-directory. This set up allows for: 
+directory. This set up allows for:
 
   - easy customization of rsnapshot options for individual clients
   - simple testing and running of backups for a single client
-  - multiple rsnapshot jobs running in parallel (depending on network/disk bandwidth)
+  - multiple rsnapshot jobs running in parallel depending on network/disk bandwidth
 
 On the rsnapshot clients, the role will create:
 
@@ -33,14 +33,14 @@ On the rsnapshot clients, the role will create:
 If an intermediate SSH proxy host is configured for the role, it will also create:
 
   - an 'sshproxy' account on the proxy host
-  - a ~sshproxy/.ssh/authorized_keys file that limits connections from a single IP 
+  - a **~sshproxy/.ssh/authorized_keys** file that limits connections from a single IP
     address and forces passthrough connections
   - an SSH configuration file on the server at **/root/.ssh/config** that
     specifies the path through the proxy to the client
 
-# Role Variables
+# Required Role Variables
 
-### Required Server Configuration
+### Server Configuration
 
 Enable the server role in the host_vars file by specifying the filesystem path
 where backups will be stored:
@@ -49,18 +49,14 @@ where backups will be stored:
 rsnapshot_backup_root: /backup
 ```
 
-### Required Client Variables
+### Client Variables
 
-Configure client variables in either the host_vars or group_vars file depending on the 
+Configure client variables in either the host_vars or group_vars file depending on the
 setting scope.
 
-You must specify the domain name for the client that will be backed up. The
+Your hosts should have cleanly configured host and domain names as the
 rsnapshot configuration files will specify client hostnames as fully qualified
-domain names. E.g. in the format {{ inventory_hostname }}.{{ domainname }}.
-
-```
-domainname: example.com
-```
+domain names. E.g. in the format {{ ansible_hostname}}.{{ ansible_domain }}.
 
 You must specify the rsnapshot backup server and its IP address in a group or
 host variable file:
@@ -70,7 +66,7 @@ backup_server: the-ansible-inventory-hostname
 backup_server_ip: ip.add.re.ss  # This will be the proxy server IP when using one
 ```
 
-You should specify the client paths to be backed up in an appropriate group or 
+You should specify the client paths to be backed up in an appropriate group or
 host variable file:
 
 ```
@@ -80,32 +76,50 @@ backup_dirs:
   - /opt
 ```
 
-### Optional Client Configuration
+These are the only required settings to backup any number of clients to a single server.
 
-There are a number of tunable configuration options for the rsnapshot.conf files 
+# Optional Role Variables
+
+### Client Configuration
+
+There are a number of tunable configuration options for the rsnapshot.conf files
 for each client. See **[defaults/main.yml](defaults/main.yml)** for a complete list.
 
-### Required Proxy Configuration
+### Proxy Configuration
 
-To use the proxy functionality, you should specify the public IP address of the
-backup server, and configure the inventory names of any hosts for which it will
-proxy connections:
+The SSH proxy configuration uses a custom SSH client configuration on the
+rsnapshot server to build the tunnels used for the rsync backups. The role will
+assemble SSH configuration snippets in **/root/.ssh/config.d/** into a single SSH
+client configuration file at **/root/.ssh/config**.
+
+To use the proxy functionality, add a list variable of the hosts that the proxy
+host will proxy connections for:
 
 ```
-backup_server_ip: backup-server-public-IP
 backup_proxy:
   - hostname1
   - hostname2
 ```
 
-## Testing and Troubleshooting Your Configuration
+On the backup client, you should specify the IP address of the proxy for its backup_server_ip
+setting:
 
-It's a good idea to run your first backup manually. This is particularly true
-for hosts that are not directly reachable from the backup host, since the
-ssh-keyscan command will not honor your SSH configuration file and the play
-automatically adding the SSH key to the known_hosts file will fail.
 
-To do a dry run of the backup:
+```
+backup_server_ip: proxy-server-IP
+```
+
+**Nota Bene:** You will need to connect manually from the server to the proxied
+rsnapshot client one time to accept the client SSH host key. If you figure out
+a good way to automate this, please open a PR!
+
+# Testing and Troubleshooting Your Configuration
+
+It's a good idea to run your first backup manually. This helps to ensure that
+SSH user and host keys are in working order and any tunnelled connections are being
+set up properly.
+
+To test the configuration and do a dry run of the backup:
 
 ```
 rsnapshot -tvc /etc/rsnapshot.d/HOSTNAME.conf sync
@@ -124,5 +138,5 @@ session:
 rsnapshot -c /etc/rsnapshot.d/HOSTNAME.conf sync
 ```
 
-Monitor the progress to ensure it completes successfully. Backups run from cron 
+Monitor the progress to ensure it completes successfully. Backups run from cron
 will log their output to **/var/log/rsnapshot/HOSTNAME.log**.

@@ -1,0 +1,13 @@
+# Ansible generated SSH configuration for {{ ansible_hostname }} proxied hosts
+{% if backup_proxy is defined %}
+Host {{ ansible_hostname }}.{{ ansible_domain }}
+  User sshproxy
+  IdentityFile ~/.ssh/id_{{ rsnapshot_user }}
+
+Host{% for host in backup_proxy %} {{ host }}{% endfor %}
+
+  User {{ rsnapshot_user }}
+  ProxyCommand ssh -q {{ ansible_hostname }}.{{ ansible_domain }} -W %h:%p
+  IdentityFile ~/.ssh/id_{{ rsnapshot_user }}
+
+{% endif %}
