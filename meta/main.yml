@@ -1,0 +1,18 @@
+galaxy_info:
+  role_name: rsnapshot
+  author: Ben Eisenbraun
+  description: Configure rsnapshot backups for server and clients
+  license: BSD
+  min_ansible_version: 2.2
+  platforms:
+    - name: Ubuntu
+      versions:
+        - xenial
+        - bionic
+  galaxy_tags:
+    - rsnapshot
+    - rsync
+    - backup
+    - backups
+ 
+dependencies: []
