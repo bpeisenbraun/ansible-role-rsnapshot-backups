@@ -36,7 +36,7 @@
     - /var/log/rsnapshot
 
 - name: Create an SSH key for the {{ rsnapshot_user }} user if necessary
-  shell: "/usr/bin/ssh-keygen -b 4096 -f /root/.ssh/id_{{ rsnapshot_user }} -N '' -C {{ rsnapshot_user }}@{{ ansible_hostname }}"
+  shell: "/usr/bin/ssh-keygen -t ed25519 -f /root/.ssh/id_{{ rsnapshot_user }} -N '' -C {{ rsnapshot_user }}@{{ ansible_hostname }}"
   args:
     creates: "/root/.ssh/id_{{ rsnapshot_user }}"
     warn: false

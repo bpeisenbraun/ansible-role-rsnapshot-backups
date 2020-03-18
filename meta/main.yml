@@ -14,5 +14,5 @@ galaxy_info:
     - rsync
     - backup
     - backups
- 
+
 dependencies: []
