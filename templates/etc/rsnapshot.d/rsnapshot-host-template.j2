@@ -24,7 +24,7 @@ config_version	1.2
 
 # All snapshots will be stored under this root directory.
 #
-snapshot_root	{{ hostvars[backup_server]['rsnapshot_backup_root'] }}/{{ ansible_hostname }}.{{ ansible_domain }}/
+snapshot_root	{{ hostvars[backup_server]['rsnapshot_backup_root'] }}/{{ hostname }}.{{ domainname }}/
 
 # If no_create_root is enabled, rsnapshot will not automatically create the
 # snapshot_root directory. This is particularly useful if you are backing
@@ -125,14 +125,14 @@ loglevel	{{ rsnapshot_loglevel}}
 # If you enable this, data will be written to the file you specify. The
 # amount of data written is controlled by the "loglevel" parameter.
 #
-logfile	/var/log/rsnapshot/{{ ansible_hostname }}.{{ ansible_domain }}.log
+logfile	/var/log/rsnapshot/{{ hostname }}.{{ domainname }}.log
 
 # If enabled, rsnapshot will write a lockfile to prevent two instances
 # from running simultaneously (and messing up the snapshot_root).
 # If you enable this, make sure the lockfile directory is not world
 # writable. Otherwise anyone can prevent the program from running.
 #
-lockfile	/var/run/rsnapshot-{{ ansible_hostname }}.{{ ansible_domain }}.pid
+lockfile	/var/run/rsnapshot-{{ hostname }}.{{ domainname }}.pid
 
 # Default rsync args. All rsync commands have at least these options set.
 #
@@ -215,7 +215,7 @@ sync_first	1
 ### BACKUP POINTS / SCRIPTS ###
 ###############################
 {% for path in backup_dirs %}
-backup	{{ rsnapshot_user }}@{{ ansible_hostname }}.{{ ansible_domain }}:{{ path }}/	./
+backup	{{ rsnapshot_user }}@{{ hostname }}.{{ domainname }}:{{ path }}/	./
 {% endfor %}
 
 # vim: noexpandtab:ts=4
