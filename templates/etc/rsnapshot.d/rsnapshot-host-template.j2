@@ -146,7 +146,11 @@ rsync_long_args	--delete --numeric-ids --relative --delete-excluded --bwlimit={{
 
 # ssh has no args passed by default, but you can specify some here.
 #
+{% if backup_sshd_port %}
+ssh_args	-o BatchMode=yes -i /root/.ssh/id_{{ rsnapshot_user }} -p {{ backup_sshd_port  }}
+{% else %}
 ssh_args	-o BatchMode=yes -i /root/.ssh/id_{{ rsnapshot_user }}
+{% endif %}
 
 # Default arguments for the "du" program (for disk space reporting).
 # The GNU version of "du" is preferred. See the man page for more details.
