@@ -49,3 +49,5 @@ rsnapshot_user: rsnapshot
 # Set default unprivileged group for RHEL and friends. Overriddden in facts.yml
 # for Debian and friends.
 unprivileged_group: nobody
+
+backup_sshd_port: 22
