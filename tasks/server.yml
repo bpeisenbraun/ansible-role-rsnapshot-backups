@@ -1,7 +1,7 @@
 ---
 # Set up the server side
 - name: Install rsnapshot package and tools
-  package:
+  ansible.builtin.package:
     name: "{{ item }}"
     state: "{{ pkgversion | default('present') }}"
   with_items:
@@ -10,40 +10,38 @@
     - rsync
 
 - name: Delete the default rsnapshot.conf file
-  file:
+  ansible.builtin.file:
     path: /etc/rsnapshot.conf
     state: absent
 
 - name: Create backup directory
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     owner: root
     group: root
-    mode: 0700
+    mode: "0700"
   with_items:
     - "{{ rsnapshot_backup_root }}"
 
 - name: Create config/log directory structure
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     owner: root
     group: "{{ unprivileged_group }}"
-    mode: 0750
+    mode: "0750"
   with_items:
     - /etc/rsnapshot.d
     - /var/log/rsnapshot
 
-- name: Create an SSH key for the {{ rsnapshot_user }} user if necessary
-  shell: "/usr/bin/ssh-keygen -t ed25519 -f /root/.ssh/id_{{ rsnapshot_user }} -N '' -C {{ rsnapshot_user }}@{{ ansible_hostname }}"
-  args:
+- name: Create an SSH key for the rsnapshot user if necessary
+  ansible.builtin.command:
+    cmd: "/usr/bin/ssh-keygen -t ed25519 -f /root/.ssh/id_{{ rsnapshot_user }} -N '' -C {{ rsnapshot_user }}@{{ ansible_hostname }}"
     creates: "/root/.ssh/id_{{ rsnapshot_user }}"
-    warn: false
-  tags: skip_ansible_lint
 
 - name: Add hourly sync and snapshot cron job if set by admin
-  cron:
+  ansible.builtin.cron:
     name: "hourly sync and snapshot"
     cron_file: /etc/cron.d/rsnapshot
     minute: "{{ rsnapshot_hourly_minute }}"
@@ -55,7 +53,7 @@
   tags: update_cron
 
 - name: Add daily snapshot cron job if hourly is set by admin
-  cron:
+  ansible.builtin.cron:
     name: "daily snapshot"
     cron_file: /etc/cron.d/rsnapshot
     minute: "{{ rsnapshot_daily_minute }}"
@@ -67,7 +65,7 @@
   tags: update_cron
 
 - name: Add daily sync and snapshot cron job when hourly is unset
-  cron:
+  ansible.builtin.cron:
     name: "daily sync and snapshot"
     cron_file: /etc/cron.d/rsnapshot
     minute: "{{ rsnapshot_daily_minute }}"
@@ -79,7 +77,7 @@
   tags: update_cron
 
 - name: Add weekly snapshot cron job
-  cron:
+  ansible.builtin.cron:
     name: "weekly snapshot"
     cron_file: /etc/cron.d/rsnapshot
     minute: "{{ rsnapshot_weekly_minute }}"
@@ -91,7 +89,7 @@
   tags: update_cron
 
 - name: Add monthly snapshot cron job
-  cron:
+  ansible.builtin.cron:
     name: "monthly snapshot"
     cron_file: /etc/cron.d/rsnapshot
     minute: "{{ rsnapshot_monthly_minute }}"
